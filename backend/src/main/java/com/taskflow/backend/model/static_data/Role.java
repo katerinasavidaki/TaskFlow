@@ -23,6 +23,7 @@ public class Role extends AbstractEntity {
      * Used internally in the system for access control.
      */
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false, name="role_type")
     private RoleType roleType;
 
     /**
