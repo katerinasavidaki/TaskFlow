@@ -14,6 +14,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 @Table(name = "user_info")
+@ToString(exclude = "user")
 public class UserInfo extends AbstractEntity {
 
     @Id
@@ -32,5 +33,25 @@ public class UserInfo extends AbstractEntity {
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", nullable = false,
             unique = true)
+    @Setter(AccessLevel.NONE)
     private User user;
+
+    public void setUser(User user) {
+        this.user = user;
+
+        if (user != null && user.getUserInfo() != this) {
+            user.setUserInfo(this);
+        }
+    }
+
+    public void removeUser() {
+        if (this.user != null) {
+            User previousUser = this.user;
+            this.user = null;
+
+            if (previousUser.getUserInfo() == this) {
+                previousUser.setUserInfo(null);
+            }
+        }
+    }
 }
