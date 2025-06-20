@@ -1,7 +1,8 @@
 package com.taskflow.backend.core.enums;
 
-public enum TaskStatus {
+public enum TaskStatusType {
     TODO,
     IN_PROGRESS,
+    REVIEW,
     COMPLETED
 }

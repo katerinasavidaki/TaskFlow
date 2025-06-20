@@ -1,6 +1,6 @@
 package com.taskflow.backend.core.enums;
 
-public enum TaskPriority {
+public enum TaskPriorityType {
     LOW,
     MEDIUM,
     HIGH,
