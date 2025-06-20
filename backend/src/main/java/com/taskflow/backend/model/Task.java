@@ -1,7 +1,7 @@
 package com.taskflow.backend.model;
 
-import com.taskflow.backend.core.enums.TaskPriority;
-import com.taskflow.backend.core.enums.TaskStatus;
+import com.taskflow.backend.core.enums.TaskPriorityType;
+import com.taskflow.backend.core.enums.TaskStatusType;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -29,11 +29,11 @@ public class Task extends AbstractEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TaskPriority priority;
+    private TaskPriorityType priority;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private TaskStatus status;
+    private TaskStatusType status;
 
     @Column(name="due_date")
     private LocalDateTime dueDate;
