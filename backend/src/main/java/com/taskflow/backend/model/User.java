@@ -10,9 +10,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 
 /**
@@ -26,6 +24,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Builder
 @Table(name = "users")
+@ToString(exclude = {"password", "userInfo", "createdTasks", "assignedTasks"})
 public class User extends AbstractEntity implements UserDetails {
 
     @Id
@@ -59,27 +58,68 @@ public class User extends AbstractEntity implements UserDetails {
     private Role role;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Setter(AccessLevel.NONE) // Prevents direct setting, use setUserInfo method instead
     private UserInfo userInfo;
 
+    @OneToMany(mappedBy = "createdBy")
+    private List<Task> createdTasks = new ArrayList<>();
+
+    @OneToMany(mappedBy = "assignedTo")
+    private List<Task> assignedTasks = new ArrayList<>();
+
+    public void setUserInfo(UserInfo userInfo) {
+        this.userInfo = userInfo;
+        if (userInfo != null && userInfo.getUser() != this) {
+            userInfo.setUser(this);
+        }
+    }
+
+    public void removeUserInfo() {
+        if (this.userInfo != null) {
+            this.userInfo.setUser(null);
+            this.userInfo = null;
+        }
+    }
+
+    /**
+     * Initializes the UUID before persisting the entity if it is not already set.
+     * This method is called automatically by JPA before the entity is persisted.
+     */
     @PrePersist
-    public void initiliazeUuid() {
+    public void initializeUUID() {
         if (uuid == null) uuid = UUID.randomUUID().toString();
     }
 
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", uuid='" + uuid + '\'' +
-                ", firstname='" + firstname + '\'' +
-                ", lastname='" + lastname + '\'' +
-                ", username='" + username + '\'' +
-                ", password='" + password + '\'' +
-                ", email='" + email + '\'' +
-                ", isActive=" + isActive +
-                ", role=" + role +
-                ", userInfo=" + userInfo +
-                '}';
+    public List<Task> getAllCreatedTasks() {
+        return Collections.unmodifiableList(createdTasks);
+    }
+
+    public List<Task> getAllAssignedTasks() {
+        return Collections.unmodifiableList(assignedTasks);
+    }
+
+    public void addCreatedTask(Task task) {
+        if (createdTasks == null) createdTasks = new ArrayList<>();
+        createdTasks.add(task);
+        task.setCreatedBy(this);
+    }
+
+    public void removeCreatedTask(Task task) {
+        if (createdTasks == null) createdTasks = new ArrayList<>();
+        createdTasks.remove(task);
+        task.setCreatedBy(null);
+    }
+
+    public void addAssignedTask(Task task) {
+        if (assignedTasks == null) assignedTasks = new ArrayList<>();
+        assignedTasks.add(task);
+        task.setAssignedTo(this);
+    }
+
+    public void removeAssignedTask(Task task) {
+        if (assignedTasks == null) assignedTasks = new ArrayList<>();
+        assignedTasks.remove(task);
+        task.setAssignedTo(null);
     }
 
     @Override
