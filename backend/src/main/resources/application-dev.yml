@@ -8,6 +8,7 @@ spring:
     password: ${DB_PASSWORD:taskflow123}
     driver-class-name: org.postgresql.Driver
 
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -16,6 +17,17 @@ spring:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: true
+        globally_quoted_identifiers: true
+
+
+  #UNCOMMENT WHEN FIRST UPDATE, COMMENT WHEN CREATE
+#sql:
+#  init:
+#    mode: always
+#    data-locations:
+#      - classpath:data/roles.sql
+#      - classpath:data/task_priorities.sql
+#      - classpath:data/task_statuses.sql
 
   servlet:
     multipart:
