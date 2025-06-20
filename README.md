@@ -7,8 +7,7 @@ and collaborate effectively.
 
 
 ---
-The project is currently under development
-and the code is not yet available. It is based on the final project of the
+The project is currently under development. It is based on the final project of the
 Coding Factory Bootcamp.
 
 
