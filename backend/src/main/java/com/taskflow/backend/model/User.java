@@ -53,17 +53,45 @@ public class User extends AbstractEntity implements UserDetails {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "role_id", nullable = false)
+    @Setter(AccessLevel.PROTECTED)
     private Role role;
 
     @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Setter(AccessLevel.NONE) // Prevents direct setting, use setUserInfo method instead
     private UserInfo userInfo;
 
-    @OneToMany(mappedBy = "createdBy")
+    // One-to-Many: A user can create many tasks
+    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Setter(AccessLevel.PROTECTED) // Prevents direct setting,
+    // use addCreatedTask and removeCreatedTask methods instead
     private List<Task> createdTasks = new ArrayList<>();
 
-    @OneToMany(mappedBy = "assignedTo")
+    // One-to-Many: A user can be assigned many tasks
+    @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Setter(AccessLevel.PROTECTED) // Prevents direct setting,
+    // use addAssignedTask and removeAssignedTask methods instead
     private List<Task> assignedTasks = new ArrayList<>();
+
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "team_id", nullable = false)
+    private Team team;
+
+    public void setTeam(Team team) {
+        if (this.team != null) {
+            this.team.getMembers().remove(this);
+        }
+        this.team = team;
+        if (team != null && !team.getMembers().contains(this)) {
+            team.getMembers().add(this);
+        }
+    }
+
+    public void removeTeam() {
+        if (this.team != null) {
+            Team currentTeam = this.team;
+            this.team = null;
+            currentTeam.removeMember(this);
+        }
+    }
 
     public void setUserInfo(UserInfo userInfo) {
         this.userInfo = userInfo;
@@ -74,9 +102,14 @@ public class User extends AbstractEntity implements UserDetails {
 
     public void removeUserInfo() {
         if (this.userInfo != null) {
-            this.userInfo.setUser(null);
+            UserInfo currentUserInfo = this.userInfo;
             this.userInfo = null;
+
+            if (currentUserInfo.getUser() == this) {
+                currentUserInfo.setUser(null);
+            }
         }
+
     }
 
     /**
@@ -96,28 +129,42 @@ public class User extends AbstractEntity implements UserDetails {
         return Collections.unmodifiableList(assignedTasks);
     }
 
+    /**
+     * Adds a task as created by this user.
+     * Updates both sides of the bidirectional relationship.
+     */
     public void addCreatedTask(Task task) {
         if (createdTasks == null) createdTasks = new ArrayList<>();
-        createdTasks.add(task);
-        task.setCreatedBy(this);
+        if (task != null ) task.setCreatedBy(this);
     }
 
+    /**
+     * Removes a task from this user's created tasks.
+     * Updates both sides of the bidirectional relationship.
+     */
     public void removeCreatedTask(Task task) {
-        if (createdTasks == null) createdTasks = new ArrayList<>();
-        createdTasks.remove(task);
-        task.setCreatedBy(null);
+        if (task != null && task.getCreatedBy() == this) {
+            task.setCreatedBy(null);
+        }
     }
 
+    /**
+     * Assigns a task to this user.
+     * Updates both sides of the bidirectional relationship.
+     */
     public void addAssignedTask(Task task) {
         if (assignedTasks == null) assignedTasks = new ArrayList<>();
-        assignedTasks.add(task);
-        task.setAssignedTo(this);
+        if (task != null) task.setAssignedTo(this);
     }
 
+    /**
+     * Unassigns a task from this user.
+     * Updates both sides of the bidirectional relationship.
+     */
     public void removeAssignedTask(Task task) {
-        if (assignedTasks == null) assignedTasks = new ArrayList<>();
-        assignedTasks.remove(task);
-        task.setAssignedTo(null);
+        if (task != null && task.getAssignedTo() == this) {
+            task.setAssignedTo(null);
+        }
     }
 
     @Override
