@@ -21,6 +21,7 @@ public class Team extends AbstractEntity {
     private String name;
 
     @OneToOne(optional = false)
+    @Column(name = "team_leader_id", unique = true, nullable = false)
     @JoinColumn(name = "team_leader_id", nullable = false, unique = true)
     @Setter(AccessLevel.PROTECTED) // Prevent direct modification of the team leader
     private User teamLeader;
