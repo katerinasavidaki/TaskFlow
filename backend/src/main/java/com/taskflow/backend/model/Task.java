@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -16,16 +17,17 @@ import java.time.LocalDateTime;
 @Builder
 @Table(name = "tasks")
 @ToString(exclude = {"createdBy", "assignedTo"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Task extends AbstractEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Enumerated(EnumType.STRING)
@@ -37,7 +39,7 @@ public class Task extends AbstractEntity {
     private TaskStatusType status;
 
     @Column(name="due_date")
-    private LocalDateTime dueDate;
+    private LocalDate dueDate;
 
     @Column(name = "is_completed", nullable = false)
     @ColumnDefault("false")
@@ -49,37 +51,12 @@ public class Task extends AbstractEntity {
     private User createdBy;
 
     // Many-to-One: Many tasks can be assigned to one user
-    @Column(name = "assigned_to_id")
     @ManyToOne
+    @JoinColumn(name = "assigned_to_id")
     private User assignedTo;
 
-    /**
-     * Sets the creator of this task and maintains bidirectional consistency.
-     */
-    public void setCreatedBy(User user) {
-        if (this.createdBy != null) {
-            this.createdBy.getCreatedTasks().remove(this);
-        }
-
-        this.createdBy = user;
-        if (user != null && !user.getCreatedTasks().contains(this)) {
-            user.getCreatedTasks().add(this);
-        }
-    }
-
-    /**
-     * Sets the assignee of this task and maintains bidirectional consistency.
-     */
-    public void setAssignedTo(User user) {
-        if (this.assignedTo != null) {
-            this.assignedTo.getAssignedTasks().remove(this);
-        }
-
-        this.assignedTo = user;
-        if (user != null && !user.getAssignedTasks().contains(this)) {
-            user.getAssignedTasks().add(this);
-        }
-
-    }
+    @ManyToOne
+    @JoinColumn(name = "team_id")
+    private Team team;
 }
 
