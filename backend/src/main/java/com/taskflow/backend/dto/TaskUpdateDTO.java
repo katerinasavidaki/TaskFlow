@@ -2,6 +2,7 @@ package com.taskflow.backend.dto;
 
 import com.taskflow.backend.core.enums.TaskPriorityType;
 import com.taskflow.backend.core.enums.TaskStatusType;
+import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.*;
@@ -25,6 +26,7 @@ public class TaskUpdateDTO {
 
     private TaskPriorityType priority;
 
+    @FutureOrPresent(message = "Due date must be in the present or future")
     private LocalDate dueDate;
 
     private Boolean isCompleted;

@@ -2,10 +2,7 @@ package com.taskflow.backend.dto;
 
 import com.taskflow.backend.core.enums.TaskPriorityType;
 import com.taskflow.backend.core.enums.TaskStatusType;
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Pattern;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -30,6 +27,7 @@ public class TaskInsertDTO {
     @NotNull(message = "Status is required")
     private TaskStatusType status;
 
+    @FutureOrPresent(message = "Due date must be in the present or future")
     private LocalDate dueDate;
 
     private Boolean isCompleted = false;
