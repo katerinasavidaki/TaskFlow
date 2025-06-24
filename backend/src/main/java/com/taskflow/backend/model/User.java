@@ -1,7 +1,8 @@
 package com.taskflow.backend.model;
 
-import com.taskflow.backend.model.static_data.Role;
+import com.taskflow.backend.core.enums.RoleType;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 import org.springframework.security.core.GrantedAuthority;
@@ -22,11 +23,13 @@ import java.util.*;
 @NoArgsConstructor
 @Builder
 @Table(name = "users")
-@ToString(exclude = {"password", "userInfo", "createdTasks", "assignedTasks"})
-public class User extends AbstractEntity implements UserDetails {
+@ToString(exclude = {"password", "assignedTasks", "createdTasks"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
+public class User extends AbstractEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(unique = true)
@@ -39,78 +42,38 @@ public class User extends AbstractEntity implements UserDetails {
     private String lastname;
 
     @Column(unique = true, nullable = false)
-    private String username;
+    private String username;        // email as login identifier
 
     @Column(nullable = false)
     private String password;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+    @NotNull(message = "AFM is required")
+    private String afm;
+
+    @NotNull(message = "Phone number is required")
+    private String phoneNumber;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private RoleType role;
 
     @ColumnDefault("true")
     @Column(name = "is_active", nullable = false)
     private Boolean isActive;
 
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "role_id", nullable = false)
-    @Setter(AccessLevel.PROTECTED)
-    private Role role;
-
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private UserInfo userInfo;
-
-    // One-to-Many: A user can create many tasks
-    @OneToMany(mappedBy = "createdBy", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "createdBy")
     @Setter(AccessLevel.PROTECTED) // Prevents direct setting,
-    // use addCreatedTask and removeCreatedTask methods instead
-    private List<Task> createdTasks = new ArrayList<>();
+    private Set<Task> createdTasks = new HashSet<>();
 
     // One-to-Many: A user can be assigned many tasks
     @OneToMany(mappedBy = "assignedTo", cascade = CascadeType.ALL, orphanRemoval = true)
     @Setter(AccessLevel.PROTECTED) // Prevents direct setting,
     // use addAssignedTask and removeAssignedTask methods instead
-    private List<Task> assignedTasks = new ArrayList<>();
+    private Set<Task> assignedTasks = new HashSet<>();
 
-    @ManyToOne(optional = false)
+    @ManyToOne
     @JoinColumn(name = "team_id", nullable = false)
     private Team team;
-
-    public void setTeam(Team team) {
-        if (this.team != null) {
-            this.team.getMembers().remove(this);
-        }
-        this.team = team;
-        if (team != null && !team.getMembers().contains(this)) {
-            team.getMembers().add(this);
-        }
-    }
-
-    public void removeTeam() {
-        if (this.team != null) {
-            Team currentTeam = this.team;
-            this.team = null;
-            currentTeam.removeMember(this);
-        }
-    }
-
-    public void setUserInfo(UserInfo userInfo) {
-        this.userInfo = userInfo;
-        if (userInfo != null && userInfo.getUser() != this) {
-            userInfo.setUser(this);
-        }
-    }
-
-    public void removeUserInfo() {
-        if (this.userInfo != null) {
-            UserInfo currentUserInfo = this.userInfo;
-            this.userInfo = null;
-
-            if (currentUserInfo.getUser() == this) {
-                currentUserInfo.setUser(null);
-            }
-        }
-
-    }
 
     /**
      * Initializes the UUID before persisting the entity if it is not already set.
@@ -121,74 +84,64 @@ public class User extends AbstractEntity implements UserDetails {
         if (uuid == null) uuid = UUID.randomUUID().toString();
     }
 
-    public List<Task> getAllCreatedTasks() {
-        return Collections.unmodifiableList(createdTasks);
+    public Set<Task> getAllAssignedTasks() {
+        return Collections.unmodifiableSet(assignedTasks);
     }
 
-    public List<Task> getAllAssignedTasks() {
-        return Collections.unmodifiableList(assignedTasks);
+    public Set<Task> getAllCreatedTasks() {
+        return Collections.unmodifiableSet(createdTasks);
     }
 
-    /**
-     * Adds a task as created by this user.
-     * Updates both sides of the bidirectional relationship.
-     */
     public void addCreatedTask(Task task) {
-        if (createdTasks == null) createdTasks = new ArrayList<>();
-        if (task != null ) task.setCreatedBy(this);
+        if (createdTasks == null) createdTasks = new HashSet<>();
+        createdTasks.add(task);
+        task.setCreatedBy(this);
     }
 
-    /**
-     * Removes a task from this user's created tasks.
-     * Updates both sides of the bidirectional relationship.
-     */
     public void removeCreatedTask(Task task) {
-        if (task != null && task.getCreatedBy() == this) {
+        if (createdTasks == null) createdTasks = new HashSet<>();
+        createdTasks.remove(task);
+        if (task.getCreatedBy() == this) {
             task.setCreatedBy(null);
         }
     }
 
-    /**
-     * Assigns a task to this user.
-     * Updates both sides of the bidirectional relationship.
-     */
     public void addAssignedTask(Task task) {
-        if (assignedTasks == null) assignedTasks = new ArrayList<>();
-        if (task != null) task.setAssignedTo(this);
+        if (assignedTasks == null) assignedTasks = new HashSet<>();
+        assignedTasks.add(task);
+        task.setAssignedTo(this);
     }
 
-    /**
-     * Unassigns a task from this user.
-     * Updates both sides of the bidirectional relationship.
-     */
     public void removeAssignedTask(Task task) {
-        if (task != null && task.getAssignedTo() == this) {
+        if (assignedTasks == null) assignedTasks = new HashSet<>();
+        assignedTasks.remove(task);
+        if (task.getAssignedTo() == this) {
             task.setAssignedTo(null);
         }
     }
 
-    @Override
-    public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("Role " + role.getRoleType().name()));
-    }
-
-    @Override
-    public boolean isAccountNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
-
-    @Override
-    public boolean isCredentialsNonExpired() {
-        return true;
-    }
-
-    @Override
-    public boolean isEnabled() {
-        return this.isActive;
-    }
+//    @Override
+//    public Collection<? extends GrantedAuthority> getAuthorities() {
+//        return List.of(new SimpleGrantedAuthority("Role " + role.name()));
+//    }
+//
+//    @Override
+//    public boolean isAccountNonExpired() {
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean isAccountNonLocked() {
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean isCredentialsNonExpired() {
+//        return true;
+//    }
+//
+//    @Override
+//    public boolean isEnabled() {
+//        return this.isActive;
+//    }
 }

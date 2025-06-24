@@ -12,46 +12,41 @@ import java.util.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@ToString(exclude = {"manager", "members"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true, callSuper = false)
 public class Team extends AbstractEntity {
 
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @Column(unique = true, nullable = false)
     private String name;
 
-    @OneToOne(optional = false)
-    @Column(name = "team_leader_id", unique = true, nullable = false)
-    @JoinColumn(name = "team_leader_id", nullable = false, unique = true)
-    @Setter(AccessLevel.PROTECTED) // Prevent direct modification of the team leader
-    private User teamLeader;
-
-    @ManyToOne(optional = false)
-    @JoinColumn(name = "manager_id", nullable = false)
-    @Setter(AccessLevel.PROTECTED) // Prevent direct modification of the manager
+    @OneToOne
+    @JoinColumn(name = "manager_id", nullable = false, unique = true)
     private User manager;
 
     @OneToMany(mappedBy = "team", cascade = CascadeType.ALL, orphanRemoval = true)
     @Setter(AccessLevel.PROTECTED) // Prevent direct modification of the collection
-    private List<User> members = new ArrayList<>();
+    private Set<User> members = new HashSet<>();
 
     public void addMember(User user) {
-        if (members == null) members = new ArrayList<>();
+        if (members == null) members = new HashSet<>();
         members.add(user);
-        if (user.getTeam() != this) {
-            user.setTeam(this);
-        }
+        user.setTeam(this);
     }
 
     public void removeMember(User user) {
-        if (members == null) members = new ArrayList<>();
+        if (members == null) members = new HashSet<>();
         members.remove(user);
         if (user.getTeam() == this) {
-            user.setTeam(null);
+            user.setTeam(null); // Clear the team reference in User
         }
     }
 
-    public List<User> getAllMembers() {
-        return Collections.unmodifiableList(members);
+    public Set<User> getAllMembers() {
+        return Collections.unmodifiableSet(members);
     }
 }
