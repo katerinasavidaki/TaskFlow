@@ -2,12 +2,12 @@ spring:
   config:
     activate:
       on-profile: dev
+
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5433/taskflowdb}
     username: ${DB_USERNAME:taskflow_user}
     password: ${DB_PASSWORD:taskflow123}
     driver-class-name: org.postgresql.Driver
-
 
   jpa:
     hibernate:
@@ -19,29 +19,27 @@ spring:
         format_sql: true
         globally_quoted_identifiers: true
 
+#  sql:
+#    init:
+#      mode: always
+#      data-locations:
+#        - classpath:db/roles.sql
+#        - classpath:db/task_priorities.sql
+#        - classpath:db/task_statuses.sql
 
-  #UNCOMMENT WHEN FIRST UPDATE, COMMENT WHEN CREATE
-#sql:
-#  init:
-#    mode: always
-#    data-locations:
-#      - classpath:data/roles.sql
-#      - classpath:data/task_priorities.sql
-#      - classpath:data/task_statuses.sql
+servlet:
+  multipart:
+    max-file-size: 10MB
+    max-request-size: 10MB
 
-  servlet:
-    multipart:
-      max-file-size: 10MB
-      max-request-size: 10MB
-
-  logging:
-    level:
-      root: INFO
-      org.springframework.web: DEBUG
-      org.hibernate.SQL: DEBUG
-      org.hibernate.type.descriptor.sql.BasicBinder: TRACE
-    pattern:
-      console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+logging:
+  level:
+    root: INFO
+    org.springframework.web: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
 
 springdoc:
   swagger-ui:
