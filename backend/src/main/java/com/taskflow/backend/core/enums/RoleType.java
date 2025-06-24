@@ -9,6 +9,5 @@ package com.taskflow.backend.core.enums;
 public enum RoleType {
     ADMIN,
     MANAGER,
-    TEAM_LEADER,
     MEMBER
 }
