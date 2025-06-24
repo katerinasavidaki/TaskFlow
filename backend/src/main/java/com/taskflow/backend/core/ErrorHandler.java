@@ -80,7 +80,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
     }
 
     /**
-     * Handle any other Exception that has not caught
+     * Handle any other Exception that has not been caught
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseMessageDTO> handleGenericException(Exception ex) {
