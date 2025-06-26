@@ -35,13 +35,12 @@ public class UserInsertDTO {
     private String username;
 
     @NotBlank(message = "Password is required")
-    @Pattern(regexp = "^(?=.*?[a-z])(?=.*?[A-Z])(?=.*?\\d)(?=.*?[@#$!%&*]).{8,}$",
-            message = "Invalid Password")
+    @Pattern(regexp = "^(?=.*?[a-z])(?=.*?[A-Z])(?=.*?\\d)(?=.*?[@#$!%&*.]).{8,}$",
+            message = "Password must contain at least 1 special character, 1 number & 1 uppercase letter")
+    @Size(min = 8, message = "Password must contain at least 8 characters")
     private String password;
 
     @NotBlank(message = "Confirm Password is required")
-    @Pattern(regexp = "^(?=.*?[a-z])(?=.*?[A-Z])(?=.*?\\d)(?=.*?[@#$!%&*]).{8,}$",
-            message = "Invalid Password")
     private String confirmPassword;
 
     @NotNull(message = "Role is required")
