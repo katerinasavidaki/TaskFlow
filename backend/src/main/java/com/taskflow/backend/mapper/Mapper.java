@@ -49,7 +49,7 @@ public class Mapper {
                 .username(user.getUsername())
                 .role(user.getRole().name())
                 .isActive(user.getIsActive())
-                .teamName(user.getTeam().getName())
+                .teamName(user.getTeam() != null ? user.getTeam().getName() : null)
                 .build();
     }
 
