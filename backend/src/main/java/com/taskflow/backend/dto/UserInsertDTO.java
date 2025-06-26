@@ -26,7 +26,7 @@ public class UserInsertDTO {
 
     @NotBlank(message = "Phone number is required")
     @Pattern(regexp = "^\\d{10,}$", message = "Phone number must be at least 10 digits")
-    @Size(min = 10, message = "Phone number must be at least 10 digits")
+    @Size(min = 10, max = 10, message = "Phone number must be exactly 10 digits")
     private String phoneNumber;
 
     @NotBlank(message = "Username is required")
@@ -49,6 +49,5 @@ public class UserInsertDTO {
 
     private Boolean isActive = true; // Default to true if not specified
 
-    @NotNull(message = "Team is required")
     private Long teamId;
 }

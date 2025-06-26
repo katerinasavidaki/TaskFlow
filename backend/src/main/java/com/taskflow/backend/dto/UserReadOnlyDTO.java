@@ -1,5 +1,6 @@
 package com.taskflow.backend.dto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.taskflow.backend.core.enums.RoleType;
 import lombok.*;
 
@@ -8,6 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserReadOnlyDTO {
 
     private Long id;
