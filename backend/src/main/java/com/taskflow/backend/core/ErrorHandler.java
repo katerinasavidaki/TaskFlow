@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
@@ -84,7 +85,7 @@ public class ErrorHandler extends ResponseEntityExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ResponseMessageDTO> handleGenericException(Exception ex) {
-
+        ex.printStackTrace();
         return new ResponseEntity<>(new ResponseMessageDTO("Internal Error",
                 "Something went wrong. Please try again"), HttpStatus.INTERNAL_SERVER_ERROR);
     }
