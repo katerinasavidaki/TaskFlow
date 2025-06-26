@@ -72,7 +72,7 @@ public class User extends AbstractEntity {
     private Set<Task> assignedTasks = new HashSet<>();
 
     @ManyToOne
-    @JoinColumn(name = "team_id", nullable = false)
+    @JoinColumn(name = "team_id")
     private Team team;
 
     /**
