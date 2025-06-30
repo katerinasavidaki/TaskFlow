@@ -3,7 +3,7 @@ package com.taskflow.backend.service;
 import com.taskflow.backend.core.exceptions.AppObjectAlreadyExistsException;
 import com.taskflow.backend.core.exceptions.AppObjectInvalidArgumentException;
 import com.taskflow.backend.core.exceptions.AppObjectNotFoundException;
-import com.taskflow.backend.dto.UserInsertDTO;
+import com.taskflow.backend.dto.UserRegisterDTO;
 import com.taskflow.backend.dto.UserReadOnlyDTO;
 import com.taskflow.backend.dto.UserUpdateDTO;
 import com.taskflow.backend.mapper.Mapper;
@@ -12,7 +12,6 @@ import com.taskflow.backend.model.User;
 import com.taskflow.backend.repository.TeamRepository;
 import com.taskflow.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,7 +29,7 @@ public class UserServiceImpl implements IUserService {
 
     @Override
     @Transactional
-    public UserReadOnlyDTO createUser(UserInsertDTO insertDTO) {
+    public UserReadOnlyDTO createUser(UserRegisterDTO insertDTO) {
 
         // Check if username already exists
         if (userRepository.existsByUsername(insertDTO.getUsername())) {
@@ -85,6 +84,14 @@ public class UserServiceImpl implements IUserService {
             user.setPhoneNumber(updateDTO.getPhoneNumber());
         }
 
+        if  (updateDTO.getAfm() != null && !updateDTO.getAfm().isBlank()) {
+            Optional<User> userWithSameAfm = userRepository.findByAfm(updateDTO.getAfm());
+            if (userWithSameAfm.isPresent() && !userWithSameAfm.get().getId().equals(user.getId())) {
+                throw new AppObjectInvalidArgumentException("USER ", "Afm already exists in another user");
+            }
+            user.setAfm(user.getAfm());
+        }
+
         Team team = null;
         if (updateDTO.getTeamId() != null) {
             team = teamRepository.findById(updateDTO.getTeamId()).orElseThrow(
@@ -92,7 +99,8 @@ public class UserServiceImpl implements IUserService {
                             " not found"));
         }
         Mapper.updateUserEntity(user, updateDTO, team);
-        return Mapper.mapToUserReadOnlyDTO(user);
+        User savedUser = userRepository.save(user);
+        return Mapper.mapToUserReadOnlyDTO(savedUser);
     }
 
     @Override

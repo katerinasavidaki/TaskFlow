@@ -1,14 +1,12 @@
 package com.taskflow.backend.rest;
 
 import com.taskflow.backend.core.exceptions.ValidationException;
-import com.taskflow.backend.dto.UserInsertDTO;
+import com.taskflow.backend.dto.UserRegisterDTO;
 import com.taskflow.backend.dto.UserReadOnlyDTO;
 import com.taskflow.backend.dto.UserUpdateDTO;
-import com.taskflow.backend.model.User;
 import com.taskflow.backend.service.IUserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -26,7 +24,7 @@ public class UserController {
     // Create a user
     @PostMapping
     public ResponseEntity<UserReadOnlyDTO> createUser(
-            @RequestBody @Valid UserInsertDTO insertDTO,
+            @RequestBody @Valid UserRegisterDTO insertDTO,
             BindingResult bindingResult) {
 
         if (!insertDTO.getPassword().equals(insertDTO.getConfirmPassword())) {
@@ -43,7 +41,7 @@ public class UserController {
         return ResponseEntity.created(location).body(createdUser);
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/user/{id}")
     public ResponseEntity<UserReadOnlyDTO> updateUser(
             @PathVariable Long id,
             @RequestBody @Valid UserUpdateDTO updateDTO,
@@ -67,6 +65,13 @@ public class UserController {
     public ResponseEntity<UserReadOnlyDTO> getUserById(@PathVariable Long id) {
 
         UserReadOnlyDTO user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/{uuid}")
+    public ResponseEntity<UserReadOnlyDTO> getUserByUuid(@PathVariable String uuid) {
+
+        UserReadOnlyDTO user = userService.getUserByUuid(uuid);
         return ResponseEntity.ok(user);
     }
 

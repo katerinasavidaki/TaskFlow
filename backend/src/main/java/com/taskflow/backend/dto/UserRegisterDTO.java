@@ -9,7 +9,7 @@ import lombok.*;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class UserInsertDTO {
+public class UserRegisterDTO {
 
     @NotBlank(message = "Firstname is required")
     @Size(min = 4, message = "Firstname must be at least 4 characters long")
@@ -43,10 +43,5 @@ public class UserInsertDTO {
     @NotBlank(message = "Confirm Password is required")
     private String confirmPassword;
 
-    @NotNull(message = "Role is required")
-    private RoleType role;
-
     private Boolean isActive = true; // Default to true if not specified
-
-    private Long teamId;
 }
