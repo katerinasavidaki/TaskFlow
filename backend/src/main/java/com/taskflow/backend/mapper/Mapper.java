@@ -1,11 +1,10 @@
 package com.taskflow.backend.mapper;
 
+import com.taskflow.backend.core.enums.RoleType;
 import com.taskflow.backend.dto.*;
 import com.taskflow.backend.model.Task;
 import com.taskflow.backend.model.Team;
 import com.taskflow.backend.model.User;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Component;
 
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -14,18 +13,19 @@ public class Mapper {
 
     private Mapper(){}
 
-    public static User mapToUserEntity(UserInsertDTO insertDTO, Team team) {
+    public static User mapToUserEntity(UserRegisterDTO registerDTO) {
 
-        return User.builder().firstname(insertDTO.getFirstname())
-                .lastname(insertDTO.getLastname())
-                .phoneNumber(insertDTO.getPhoneNumber())
-                .afm(insertDTO.getAfm())
-                .username(insertDTO.getUsername())
-                .password(insertDTO.getPassword())      // raw here, encoding at service
-                .role(insertDTO.getRole())
-                .isActive(insertDTO.getIsActive())
-                .team(team)
-                .build();
+        User user = new User();
+        user.setAfm(registerDTO.getAfm());
+        user.setFirstname(registerDTO.getFirstname());
+        user.setLastname(registerDTO.getLastname());
+        user.setUsername(registerDTO.getUsername());
+        user.setPassword(registerDTO.getPassword());    // raw here, encode at service
+        user.setPhoneNumber(registerDTO.getPhoneNumber());
+        user.setTeam(null);
+        user.setRole(RoleType.MEMBER); // default value
+
+        return user;
     }
 
     public static void updateUserEntity(User user, UserUpdateDTO userUpdateDTO, Team team) {
@@ -119,7 +119,7 @@ public class Mapper {
         return TaskReadOnlyDTO.builder()
                 .id(task.getId())
                 .assignedToUsername(assignedToUsername)
-                .createdByUsername(createdByUsername)
+//                .createdByUsername(createdByUsername)
                 .title(task.getTitle())
                 .description(task.getDescription())
                 .priority(task.getPriority().name())
