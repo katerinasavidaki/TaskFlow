@@ -47,7 +47,7 @@ public class Task extends AbstractEntity {
 
     // Many-to-One: Many tasks can be created by one user
     @ManyToOne
-    @JoinColumn(name = "created_by_id", nullable = false)
+    @JoinColumn(name = "created_by_id")
     private User createdBy;
 
     // Many-to-One: Many tasks can be assigned to one user
