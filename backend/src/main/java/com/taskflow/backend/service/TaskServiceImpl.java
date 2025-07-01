@@ -1,5 +1,7 @@
 package com.taskflow.backend.service;
 
+import com.taskflow.backend.core.enums.TaskStatusType;
+import com.taskflow.backend.core.exceptions.AppObjectInvalidArgumentException;
 import com.taskflow.backend.core.exceptions.AppObjectNotFoundException;
 import com.taskflow.backend.dto.TaskInsertDTO;
 import com.taskflow.backend.dto.TaskReadOnlyDTO;
@@ -28,7 +30,11 @@ public class TaskServiceImpl implements ITaskService {
 
     @Override
     @Transactional
-    public TaskReadOnlyDTO createTask(TaskInsertDTO insertDTO) {
+    public TaskReadOnlyDTO createTask(TaskInsertDTO insertDTO, String creatorUsername) {
+
+        User creator = userRepository.findByUsername(creatorUsername)
+                .orElseThrow(() -> new AppObjectNotFoundException("USER ", "Creator with username " +
+                        creatorUsername + " not found"));
 
         User assignedTo = null;
         if (insertDTO.getAssignedToId() != null) {
@@ -45,6 +51,9 @@ public class TaskServiceImpl implements ITaskService {
         }
 
         Task task = Mapper.mapToTaskEntity(insertDTO, assignedTo, team);
+
+        task.setCreatedBy(creator);
+        task.setStatus(TaskStatusType.TODO);
         taskRepository.save(task);
         return Mapper.mapToTaskReadOnlyDTO(task);
     }
@@ -82,6 +91,88 @@ public class TaskServiceImpl implements ITaskService {
                 .orElseThrow(() -> new AppObjectNotFoundException("TASK ", "Task with id " + id + " not found"));
 
         return Mapper.mapToTaskReadOnlyDTO(task);
+    }
+
+    @Override
+    @Transactional
+    public TaskReadOnlyDTO assignTaskToUser(Long taskId, Long userId) {
+
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new AppObjectNotFoundException("TASK ", "Task with id " + taskId +
+                        " not found"));
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppObjectNotFoundException("USER ", "User with id " + userId +
+                        " not found"));
+
+        task.setAssignedTo(user);
+        taskRepository.save(task);
+        return Mapper.mapToTaskReadOnlyDTO(task);
+    }
+
+    @Override
+    @Transactional
+    public TaskReadOnlyDTO markTaskAsCompleted(Long id) {
+
+        Task task = taskRepository.findById(id)
+                .orElseThrow(() -> new AppObjectNotFoundException("TASK ", "Task with id " + id +
+                        " not found"));
+
+        if (task.getStatus() == TaskStatusType.COMPLETED) {
+            throw new AppObjectInvalidArgumentException("TASK ", "Task has already been completed");
+        }
+
+        task.setStatus(TaskStatusType.COMPLETED);
+        taskRepository.save(task);
+
+        return Mapper.mapToTaskReadOnlyDTO(task);
+    }
+
+    @Override
+    public List<TaskReadOnlyDTO> getTasksByAssignee(Long userId) {
+
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new AppObjectNotFoundException("USER ", "User with id " + userId +
+                        " not found"));
+
+        List<Task> tasks = taskRepository.findAllByAssignedTo(user);
+
+        return tasks.stream()
+                .map(Mapper::mapToTaskReadOnlyDTO)
+                .toList();
+    }
+
+    @Override
+    public List<TaskReadOnlyDTO> getTasksByCreatedBy(String username) {
+
+        User creator = userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppObjectNotFoundException("USER ", "Creator with username " + username +
+                        " not found"));
+
+        List<Task> tasks = taskRepository.findAllByCreatedBy(creator);
+
+        return tasks.stream()
+                .map(Mapper::mapToTaskReadOnlyDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TaskReadOnlyDTO> getTasksByStatus(TaskStatusType status) {
+
+        List<Task> tasks = taskRepository.findAllByStatus(status);
+        return tasks.stream()
+                .map(Mapper::mapToTaskReadOnlyDTO)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<TaskReadOnlyDTO> getCompletedTasks(Boolean isCompleted) {
+
+        List<Task> tasks = taskRepository.findAllByIsCompleted(isCompleted);
+
+        return tasks.stream()
+                .map(Mapper::mapToTaskReadOnlyDTO)
+                .collect(Collectors.toList());
     }
 
     @Override
