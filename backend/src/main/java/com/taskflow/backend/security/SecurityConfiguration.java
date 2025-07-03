@@ -46,7 +46,11 @@ public class SecurityConfiguration {
                 .exceptionHandling(exception -> exception.accessDeniedHandler(myCustomAccessDeniedHandler()))
                 .authorizeHttpRequests(req -> req
                         .requestMatchers("/api/auth/authenticate").permitAll()
-                        .requestMatchers("/api/auth/register").hasAnyAuthority(RoleType.ADMIN.name(), RoleType.MEMBER.name(), RoleType.MANAGER.name())
+                        .requestMatchers("/api/auth/register").permitAll()
+                        .requestMatchers("/swagger-ui/**",
+                                "/v3/api-docs/**",
+                                "/swagger-ui.html").permitAll()
+                        .anyRequest().authenticated()
                         .requestMatchers("/**").permitAll())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authenticationProvider(authenticationProvider())
