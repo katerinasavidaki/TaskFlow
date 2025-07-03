@@ -1,10 +1,12 @@
 package com.taskflow.backend.repository;
 
+import com.taskflow.backend.model.Team;
 import com.taskflow.backend.model.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 import javax.swing.text.html.Option;
+import java.util.List;
 import java.util.Optional;
 
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
@@ -14,4 +16,5 @@ public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificat
     Optional<User> findByAfm(String afm);
     Optional<User> findByPhoneNumber(String phoneNumber);
     Boolean existsByUsername(String username);
+    List<User> findAllByTeam(Team team);
 }

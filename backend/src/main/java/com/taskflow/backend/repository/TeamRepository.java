@@ -13,4 +13,6 @@ public interface TeamRepository extends JpaRepository<Team, Long>, JpaSpecificat
     Optional<Team> findByName(String name);
     Optional<Team> findByManager(User manager);
     Boolean existsByName(String name);
+    List<Team> findAllByManager(User manager);
+    Optional<Team> findByMembers(User member);
 }

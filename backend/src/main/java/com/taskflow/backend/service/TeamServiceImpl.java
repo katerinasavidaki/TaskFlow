@@ -1,9 +1,7 @@
 package com.taskflow.backend.service;
 
-import com.taskflow.backend.core.exceptions.AppObjectAlreadyExistsException;
-import com.taskflow.backend.core.exceptions.AppObjectInvalidArgumentException;
-import com.taskflow.backend.core.exceptions.AppObjectNotFoundException;
-import com.taskflow.backend.core.exceptions.ValidationException;
+import com.taskflow.backend.core.enums.RoleType;
+import com.taskflow.backend.core.exceptions.*;
 import com.taskflow.backend.dto.TeamInsertDTO;
 import com.taskflow.backend.dto.TeamReadOnlyDTO;
 import com.taskflow.backend.dto.TeamUpdateDTO;
@@ -13,13 +11,11 @@ import com.taskflow.backend.model.User;
 import com.taskflow.backend.repository.TeamRepository;
 import com.taskflow.backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,7 +27,8 @@ public class TeamServiceImpl implements ITeamService {
 
     @Override
     @Transactional
-    public TeamReadOnlyDTO createTeam(TeamInsertDTO insertDTO) {
+    public TeamReadOnlyDTO createTeam(TeamInsertDTO insertDTO, String creatorUsername) {
+
         if (teamRepository.existsByName(insertDTO.getName())) {
             throw new AppObjectAlreadyExistsException("TEAM ", "Team with name " + insertDTO.getName() + " already exists");
         }
@@ -42,11 +39,12 @@ public class TeamServiceImpl implements ITeamService {
 
         Set<User> members = new HashSet<>();
         if (insertDTO.getMemberIds() != null && !insertDTO.getMemberIds().isEmpty()) {
-            members = new HashSet<>(userRepository.findAllById(insertDTO.getMemberIds()));
+            List<User> users = userRepository.findAllById(insertDTO.getMemberIds());
 
-            if (members.size() != insertDTO.getMemberIds().size()) {
+            if (users.size() != insertDTO.getMemberIds().size()) {
                 throw new AppObjectInvalidArgumentException("USER ", "One or more user IDs in members not found");
             }
+            members.addAll(users);
         }
 
 
@@ -58,7 +56,10 @@ public class TeamServiceImpl implements ITeamService {
 
     @Override
     @Transactional
-    public TeamReadOnlyDTO updateTeam(Long id, TeamUpdateDTO updateDTO) {
+    public TeamReadOnlyDTO updateTeam(Long id, TeamUpdateDTO updateDTO, String requesterUsername) {
+
+        User currentUser = getUserOrThrow(requesterUsername);
+        checkAdminOrManager(currentUser);
 
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new AppObjectNotFoundException("TEAM ", "Team with id " + id + " not found"));
@@ -81,7 +82,6 @@ public class TeamServiceImpl implements ITeamService {
             if (users.size() != updateDTO.getMemberIds().size()) {
                 throw new AppObjectInvalidArgumentException("USER ", "One or more user IDs in members not found");
             }
-
             members.addAll(users);
         }
 
@@ -91,27 +91,106 @@ public class TeamServiceImpl implements ITeamService {
     }
 
     @Override
-    public void deleteTeam(Long id) {
+    public void deleteTeam(Long id, String requesterUsername) {
+
+        User currentUser = getUserOrThrow(requesterUsername);
+        checkAdminOrManager(currentUser);
+
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new AppObjectNotFoundException("TEAM ", "Team with id " + id + " not found"));
+
         teamRepository.delete(team);
     }
 
     @Override
-    public TeamReadOnlyDTO getTeamById(Long id) {
+    public TeamReadOnlyDTO getTeamById(Long id, String requesterUsername) {
+
+        User currentUser = getUserOrThrow(requesterUsername);
+
         Team team = teamRepository.findById(id)
                 .orElseThrow(() -> new AppObjectNotFoundException("TEAM ", "Team with id " + id +
                         " not found"));
+
+        if (currentUser.getRole() == RoleType.MEMBER && !team.getMembers().contains(currentUser)) {
+            throw new AppObjectNotAuthorizedException("TEAM ", "Not authorized to access this team");
+        }
 
         return Mapper.mapToTeamReadOnlyDTO(team);
     }
 
     @Override
-    public List<TeamReadOnlyDTO> getAllTeams() {
+    public List<TeamReadOnlyDTO> getMyTeam(String requesterUsername) {
+
+        User currentUser = getUserOrThrow(requesterUsername);
+
+        if (currentUser.getRole() == RoleType.MEMBER) {
+            return teamRepository.findByMembers(currentUser)
+                    .map(Mapper::mapToTeamReadOnlyDTO)
+                    .map(List::of)
+                    .orElse(List.of());
+        }
+
+        return teamRepository.findByMembers(currentUser)
+                .map(Mapper::mapToTeamReadOnlyDTO)
+                .map(Collections::singletonList)
+                .orElseThrow(() -> new AppObjectNotFoundException("TEAM", "Team not found for user"));
+    }
+
+
+    @Override
+    public List<TeamReadOnlyDTO> getAllTeams(String requesterUsername) {
+
+        User currentUser = getUserOrThrow(requesterUsername);
+
+        if (currentUser.getRole() == RoleType.MEMBER) {
+            return teamRepository.findByMembers(currentUser)
+                    .map(Mapper::mapToTeamReadOnlyDTO)
+                    .map(List::of)
+                    .orElse(List.of());
+        }
 
         return teamRepository.findAll()
                 .stream()
                 .map(Mapper::mapToTeamReadOnlyDTO)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    @Transactional
+    public TeamReadOnlyDTO addMemberToTeam(Long teamId, Long userId, String requesterUsername) {
+
+        User currentUser = getUserOrThrow(requesterUsername);
+
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new AppObjectNotFoundException("TEAM ", "Team with id " + teamId + " not found"));
+
+        if (currentUser.getRole() == RoleType.ADMIN ||
+                (currentUser.getRole() == RoleType.MANAGER && team.getManager().getId().equals(currentUser.getId()))) {
+            User userToAdd = userRepository.findById(userId)
+                    .orElseThrow(() -> new AppObjectNotFoundException("USER ", "User with id " + userId + " not found"));
+
+            if (team.getMembers().contains(userToAdd)) {
+                throw new AppObjectInvalidArgumentException("TEAM ", "User is already a member");
+            }
+
+            team.getMembers().add(userToAdd);
+            Team saved = teamRepository.save(team);
+            return Mapper.mapToTeamReadOnlyDTO(saved);
+        }
+
+        throw new AppObjectNotAuthorizedException("TEAM ", "You are not allowed to add members to this team");
+
+    }
+
+    // Helper methods
+    private User getUserOrThrow(String username) {
+        return userRepository.findByUsername(username)
+                .orElseThrow(() -> new AppObjectNotFoundException("USER ", "Authenticated user not found"));
+    }
+
+    private void checkAdminOrManager(User user) {
+        if (user.getRole() != RoleType.ADMIN && user.getRole() != RoleType.MANAGER) {
+            throw new AppObjectNotAuthorizedException("USER ", "Only admins or managers can perform this action");
+        }
     }
 }
