@@ -65,10 +65,7 @@ public class TeamController {
         return ResponseEntity.ok(updatedTeam);
     }
 
-    /**
-     * Update an existing team
-     * Only ADMIN or the MANAGER of the team can update it
-     */
+
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAnyRole('ADMIN', 'MANAGER')")
     public ResponseEntity<Void> deleteTeam(@PathVariable Long id, Principal principal) {
