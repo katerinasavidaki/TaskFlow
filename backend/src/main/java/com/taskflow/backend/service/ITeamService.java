@@ -8,9 +8,11 @@ import java.util.List;
 
 public interface ITeamService {
 
-    TeamReadOnlyDTO createTeam(TeamInsertDTO insertDTO);
-    TeamReadOnlyDTO updateTeam(Long id, TeamUpdateDTO updateDTO);
-    void deleteTeam(Long id);
-    TeamReadOnlyDTO getTeamById(Long id);
-    List<TeamReadOnlyDTO> getAllTeams();
+    TeamReadOnlyDTO createTeam(TeamInsertDTO insertDTO, String creatorUsername);
+    TeamReadOnlyDTO updateTeam(Long id, TeamUpdateDTO updateDTO, String updaterUsername);
+    void deleteTeam(Long id, String requesterUsername);
+    TeamReadOnlyDTO getTeamById(Long id, String requesterUsername);
+    List<TeamReadOnlyDTO> getAllTeams(String requesterUsername);
+    List<TeamReadOnlyDTO> getMyTeam(String requesterUsername);
+    TeamReadOnlyDTO addMemberToTeam(Long teamId, Long userId, String requesterUsername);
 }
