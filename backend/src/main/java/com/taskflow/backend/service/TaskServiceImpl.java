@@ -94,7 +94,7 @@ public class TaskServiceImpl implements ITaskService {
         boolean isAdmin = updater.getRole() == RoleType.ADMIN;
         boolean isManager = updater.getRole() == RoleType.MANAGER && task.getTeam() != null
                 && task.getTeam().getManager().getId().equals(updater.getId());
-        boolean isAssignedUser = task.getAssignedTo() != null && task.getAssignedTo().getId().equals(user.getId());
+        boolean isAssignedUser = task.getAssignedTo() != null && task.getAssignedTo().getId().equals(updater.getId());
 
         if (!(isAdmin || isManager || isAssignedUser)) {
             throw new AppObjectNotAuthorizedException("TASK ", "No permission to update this task");

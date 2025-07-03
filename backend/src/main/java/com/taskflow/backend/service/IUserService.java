@@ -7,10 +7,10 @@ import com.taskflow.backend.dto.UserUpdateDTO;
 import java.util.List;
 
 public interface IUserService {
-    UserReadOnlyDTO createUser(UserRegisterDTO insertDTO);
-    UserReadOnlyDTO updateUser(Long id, UserUpdateDTO updateDTO);
-    void deleteUser(Long id);
-    UserReadOnlyDTO getUserById(Long id);
-    UserReadOnlyDTO getUserByUuid(String uuid);
-    List<UserReadOnlyDTO> getAllUsers();
+    UserReadOnlyDTO updateUser(Long id, UserUpdateDTO updateDTO, String requesterUsername);
+    void deleteUser(Long id, String requesterUsername);
+    UserReadOnlyDTO getUserById(Long id, String requesterUsername);
+    UserReadOnlyDTO getUserByUuid(String uuid, String requesterUsername);
+    List<UserReadOnlyDTO> getAllUsers(String requesterUsername);
+    List<UserReadOnlyDTO> getUsersByTeamId(Long teamId, String requesterUsername);
 }
